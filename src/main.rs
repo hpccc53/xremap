@@ -209,7 +209,7 @@ fn main() -> anyhow::Result<()> {
                 }
             }
 
-            for input_device in input_devices.values_mut() {
+            for input_device in input_devices.values() {
                 if !readable_fds.contains(input_device.as_raw_fd()) {
                     continue;
                 }
@@ -279,7 +279,7 @@ fn select_readable<'a>(
 
 // Return false when a removed device is found.
 fn handle_input_events(
-    input_device: &mut InputDevice,
+    input_device: &InputDevice,
     handler: &mut EventHandler,
     dispatcher: &mut ActionDispatcher,
     config: &Config,
@@ -291,7 +291,7 @@ fn handle_input_events(
             Ok(Vec::new())
         }
         Err((_, error)) => Err(error).context("Error fetching input events"),
-        Ok(events) => Ok(events.collect()),
+        Ok(events) => Ok(events),
     }?;
 
     let info = input_device.to_info();
@@ -326,7 +326,7 @@ fn handle_device_changes(
     input_devices.extend(events.into_iter().filter_map(|event| {
         event.name.and_then(|name| {
             let path = PathBuf::from("/dev/input/").join(name);
-            let mut device = InputDevice::try_from(path).ok()?;
+            let device = InputDevice::try_from(path).ok()?;
             if device.is_input_device(device_filter, ignore_filter, mouse) && device.grab() {
                 device.print();
                 Some(device.into())
@@ -379,7 +379,7 @@ fn handle_config_changes(
     input_devices.extend(events.into_iter().filter_map(|event| {
         event.name.and_then(|name| {
             let path = PathBuf::from("/dev/input/").join(name);
-            let mut device = InputDevice::try_from(path).ok()?;
+            let device = InputDevice::try_from(path).ok()?;
             if device.is_input_device(device_filter, ignore_filter, mouse) && device.grab() {
                 device.print();
                 Some(device.into())
