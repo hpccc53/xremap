@@ -1,15 +1,15 @@
+use crate::action::Action;
+use crate::device::InputDevice;
+use crate::event::{KeyEvent, RelativeEvent};
 use crate::throttle_emit::ThrottleEmit;
-use evdev::{uinput::VirtualDevice, EventType, InputEvent, KeyCode as Key};
+use evdev::{uinput::VirtualDevice, EventType, InputEvent, KeyCode as Key, LedCode};
 use fork::{fork, setsid, Fork};
-use log::debug;
-use log::error;
-use nix::sys::signal;
-use nix::sys::signal::{sigaction, SaFlags, SigAction, SigHandler, SigSet};
+use log::{debug, error};
+use nix::sys::signal::{self, sigaction, SaFlags, SigAction, SigHandler, SigSet};
+use std::collections::HashMap;
+use std::path::PathBuf;
 use std::process::{exit, Command, Stdio};
 use std::thread;
-
-use crate::event::RelativeEvent;
-use crate::{action::Action, event::KeyEvent};
 
 pub struct ActionDispatcher {
     // Device to emit events
@@ -30,7 +30,7 @@ impl ActionDispatcher {
     }
 
     // Execute Actions created by EventHandler. This should be the only public method of ActionDispatcher.
-    pub fn on_action(&mut self, action: Action) -> anyhow::Result<()> {
+    pub fn on_action(&mut self, action: Action, input_devices: &HashMap<PathBuf, InputDevice>) -> anyhow::Result<()> {
         match action {
             Action::KeyEvent(key_event) => self.on_key_event(key_event)?,
             Action::RelativeEvent(relative_event) => self.on_relative_event(relative_event)?,
@@ -51,6 +51,11 @@ impl ActionDispatcher {
             }
 
             Action::InputEvent(event) => self.send_event(event)?,
+            Action::NumLock(b) => self.set_lock_state(input_devices, Key::KEY_NUMLOCK, LedCode::LED_NUML, b)?,
+            Action::CapsLock(b) => self.set_lock_state(input_devices, Key::KEY_CAPSLOCK, LedCode::LED_CAPSL, b)?,
+            Action::ScrollLock(b) => {
+                self.set_lock_state(input_devices, Key::KEY_SCROLLLOCK, LedCode::LED_SCROLLL, b)?
+            }
             Action::Command(command) => self.run_command(command),
             Action::Delay(duration) => thread::sleep(duration),
         }
@@ -91,6 +96,36 @@ impl ActionDispatcher {
         }
 
         self.device.emit(&[event])
+    }
+
+    /// Use the state of the keyboard LEDs to set lock keys.
+    ///
+    /// This is fragile, because keyboard LEDs aren't tied to the lock key states.
+    /// There are two other solutions:
+    ///     - Ask the desktop what the state is.
+    ///     - Ask the desktop to change the state.
+    fn set_lock_state(
+        &mut self,
+        input_devices: &HashMap<PathBuf, InputDevice>,
+        lock_key: Key,
+        led_code: LedCode,
+        b: bool,
+    ) -> std::io::Result<()> {
+        // Let one of the devices tell which state the lock key has.
+        let state = match input_devices.iter().last() {
+            Some((_, device)) => device.get_led_state()?,
+            None => {
+                // Nothing to do
+                return Ok(());
+            }
+        };
+
+        if b != state.contains(led_code) {
+            self.send_event(InputEvent::new(EventType::KEY.0, lock_key.0, 1))?;
+            self.send_event(InputEvent::new(EventType::KEY.0, lock_key.0, 0))?;
+        };
+
+        Ok(())
     }
 
     fn run_command(&mut self, command: Vec<String>) {

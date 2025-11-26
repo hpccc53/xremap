@@ -200,9 +200,13 @@ fn main() -> anyhow::Result<()> {
         match 'event_loop: loop {
             let readable_fds = select_readable(input_devices.values(), &watchers, timer_fd)?;
             if readable_fds.contains(timer_fd) {
-                if let Err(error) =
-                    handle_events(&mut handler, &mut dispatcher, &mut config, vec![Event::OverrideTimeout])
-                {
+                if let Err(error) = handle_events(
+                    &input_devices,
+                    &mut handler,
+                    &mut dispatcher,
+                    &mut config,
+                    vec![Event::OverrideTimeout],
+                ) {
                     println!("Error on remap timeout: {error}")
                 }
             }
@@ -212,7 +216,7 @@ fn main() -> anyhow::Result<()> {
                     continue;
                 }
 
-                if !handle_input_events(input_device, &mut handler, &mut dispatcher, &mut config)? {
+                if !handle_input_events(input_device, &input_devices, &mut handler, &mut dispatcher, &mut config)? {
                     println!("Found a removed device. Reselecting devices.");
                     break 'event_loop ReloadEvent::ReloadDevices;
                 }
@@ -278,6 +282,7 @@ fn select_readable<'a>(
 // Return false when a removed device is found.
 fn handle_input_events(
     input_device: &InputDevice,
+    input_devices: &HashMap<PathBuf, InputDevice>,
     handler: &mut EventHandler,
     dispatcher: &mut ActionDispatcher,
     config: &Config,
@@ -294,12 +299,14 @@ fn handle_input_events(
 
     let info = input_device.to_info();
     let input_events = events.iter().map(|e| Event::new(info.clone(), *e)).collect();
-    handle_events(handler, dispatcher, config, input_events)?;
+    handle_events(input_devices, handler, dispatcher, config, input_events)?;
+
     Ok(device_exists)
 }
 
 // Handle an Event with EventHandler, and dispatch Actions with ActionDispatcher
 fn handle_events(
+    input_devices: &HashMap<PathBuf, InputDevice>,
     handler: &mut EventHandler,
     dispatcher: &mut ActionDispatcher,
     config: &Config,
@@ -308,8 +315,9 @@ fn handle_events(
     let actions = handler
         .on_events(&events, config)
         .map_err(|e| anyhow!("Failed handling {events:?}:\n  {e:?}"))?;
+
     for action in actions {
-        dispatcher.on_action(action)?;
+        dispatcher.on_action(action, input_devices)?;
     }
     Ok(())
 }
