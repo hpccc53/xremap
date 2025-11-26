@@ -282,7 +282,7 @@ fn handle_input_events(
     input_device: &mut InputDevice,
     handler: &mut EventHandler,
     dispatcher: &mut ActionDispatcher,
-    config: &mut Config,
+    config: &Config,
 ) -> anyhow::Result<bool> {
     let mut device_exists = true;
     let events = match input_device.fetch_events().map_err(|e| (e.raw_os_error(), e)) {
@@ -302,7 +302,7 @@ fn handle_input_events(
 fn handle_events(
     handler: &mut EventHandler,
     dispatcher: &mut ActionDispatcher,
-    config: &mut Config,
+    config: &Config,
     events: Vec<Event>,
 ) -> anyhow::Result<()> {
     let actions = handler
