@@ -16,7 +16,7 @@ use std::fs::read_dir;
 use std::os::linux::fs::MetadataExt;
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::prelude::AsRawFd;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::Duration;
 use std::{io, process};
 #[cfg(feature = "udev")]
@@ -123,15 +123,15 @@ pub fn get_input_devices(
     Ok(devices.into_iter().map(From::from).collect())
 }
 
-#[derive(Debug)]
-pub struct InputDeviceInfo<'a> {
-    pub name: &'a str,
-    pub path: &'a Path,
+#[derive(Debug, Clone)]
+pub struct InputDeviceInfo {
+    pub name: String,
+    pub path: PathBuf,
     pub product: u16,
     pub vendor: u16,
 }
 
-impl<'a> InputDeviceInfo<'a> {
+impl InputDeviceInfo {
     pub fn matches(&self, filter: &str) -> bool {
         // Check exact matches for explicit selection
         if self.path.as_os_str() == filter || self.name == filter {
@@ -169,7 +169,7 @@ impl<'a> InputDeviceInfo<'a> {
         #[cfg(feature = "udev")]
         {
             if filter.starts_with("props:") {
-                if let Ok(meta) = metadata(self.path) {
+                if let Ok(meta) = metadata(&self.path) {
                     let args = filter.split(':').collect::<Vec<&str>>();
                     if args.len() == 3 {
                         if let Ok(ud) = udev::Device::from_devnum(DeviceType::Character, meta.st_rdev()) {
@@ -292,12 +292,12 @@ impl InputDevice {
         self.device.input_id().vendor()
     }
 
-    pub fn to_info(&self) -> InputDeviceInfo<'_> {
+    pub fn to_info(&self) -> InputDeviceInfo {
         InputDeviceInfo {
-            name: self.device_name(),
+            name: self.device_name().into(),
             product: self.product(),
             vendor: self.vendor(),
-            path: &self.path,
+            path: self.path.clone(),
         }
     }
 }
