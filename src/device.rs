@@ -4,9 +4,10 @@ extern crate nix;
 use anyhow::bail;
 use derive_where::derive_where;
 use evdev::uinput::VirtualDevice;
-use evdev::{AttributeSet, BusType, Device, FetchEventsSynced, InputId, KeyCode as Key, RelativeAxisCode};
+use evdev::{AttributeSet, BusType, Device, InputEvent, InputId, KeyCode as Key, LedCode, RelativeAxisCode};
 use log::debug;
 use nix::sys::inotify::{AddWatchFlags, InitFlags, Inotify};
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::error::Error;
 #[cfg(feature = "udev")]
@@ -16,7 +17,7 @@ use std::fs::read_dir;
 use std::os::linux::fs::MetadataExt;
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::prelude::AsRawFd;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::Duration;
 use std::{io, process};
 #[cfg(feature = "udev")]
@@ -102,7 +103,7 @@ pub fn get_input_devices(
         .into_iter()
         // filter map needed for mutable access
         // alternative is `Vec::retain_mut` whenever that gets stabilized
-        .filter_map(|mut device| {
+        .filter_map(|device| {
             // filter out any not matching devices and devices that error on grab
             (device.is_input_device(device_opts, ignore_opts, mouse) && device.grab()).then_some(device)
         })
@@ -123,15 +124,15 @@ pub fn get_input_devices(
     Ok(devices.into_iter().map(From::from).collect())
 }
 
-#[derive(Debug)]
-pub struct InputDeviceInfo<'a> {
-    pub name: &'a str,
-    pub path: &'a Path,
+#[derive(Debug, Clone)]
+pub struct InputDeviceInfo {
+    pub name: String,
+    pub path: PathBuf,
     pub product: u16,
     pub vendor: u16,
 }
 
-impl<'a> InputDeviceInfo<'a> {
+impl InputDeviceInfo {
     pub fn matches(&self, filter: &str) -> bool {
         // Check exact matches for explicit selection
         if self.path.as_os_str() == filter || self.name == filter {
@@ -169,7 +170,7 @@ impl<'a> InputDeviceInfo<'a> {
         #[cfg(feature = "udev")]
         {
             if filter.starts_with("props:") {
-                if let Ok(meta) = metadata(self.path) {
+                if let Ok(meta) = metadata(&self.path) {
                     let args = filter.split(':').collect::<Vec<&str>>();
                     if args.len() == 3 {
                         if let Ok(ud) = udev::Device::from_devnum(DeviceType::Character, meta.st_rdev()) {
@@ -198,7 +199,7 @@ impl<'a> InputDeviceInfo<'a> {
 pub struct InputDevice {
     path: PathBuf,
     #[derive_where(skip)]
-    device: Device,
+    device: RefCell<Device>,
 }
 
 impl Eq for InputDevice {}
@@ -212,7 +213,7 @@ impl TryFrom<PathBuf> for InputDevice {
             .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidInput))?;
         if fname.as_bytes().starts_with(b"event") {
             Ok(Self {
-                device: Device::open(&path)?,
+                device: RefCell::new(Device::open(&path)?),
                 path,
             })
         } else {
@@ -229,7 +230,7 @@ impl From<InputDevice> for (PathBuf, InputDevice) {
 
 impl AsRawFd for InputDevice {
     fn as_raw_fd(&self) -> std::os::unix::prelude::RawFd {
-        self.device.as_raw_fd()
+        self.device.borrow().as_raw_fd()
     }
 }
 
@@ -237,7 +238,7 @@ impl AsRawFd for InputDevice {
 impl InputDevice {
     pub fn wait_for_all_keys_up(&self) -> io::Result<()> {
         for _ in 0..50 {
-            let keys = self.device.get_key_state()?;
+            let keys = self.device.borrow().get_key_state()?;
 
             if keys.iter().filter(|&key| key != Key::KEY_UNKNOWN).count() == 0 {
                 return Ok(());
@@ -249,8 +250,10 @@ impl InputDevice {
         Err(io::Error::new(io::ErrorKind::TimedOut, "Timed out waiting for keys to be released."))
     }
 
-    pub fn grab(&mut self) -> bool {
-        let result = self.wait_for_all_keys_up().and_then(|_| self.device.grab());
+    pub fn grab(&self) -> bool {
+        let result = self
+            .wait_for_all_keys_up()
+            .and_then(|_| self.device.borrow_mut().grab());
 
         match result {
             Ok(_) => true,
@@ -266,43 +269,45 @@ impl InputDevice {
         }
     }
 
-    pub fn ungrab(&mut self) {
-        if let Err(error) = self.device.ungrab() {
+    pub fn ungrab(&self) {
+        if let Err(error) = self.device.borrow_mut().ungrab() {
             println!("Failed to ungrab device '{}' at '{}' due to: {error}", self.device_name(), self.path.display());
         }
     }
 
-    pub fn fetch_events(&mut self) -> io::Result<FetchEventsSynced<'_>> {
-        self.device.fetch_events()
+    pub fn fetch_events(&self) -> io::Result<Vec<InputEvent>> {
+        Ok(self.device.borrow_mut().fetch_events()?.collect())
     }
 
-    fn device_name(&self) -> &str {
-        self.device.name().unwrap_or("<Unnamed device>")
+    pub fn get_led_state(&self) -> io::Result<AttributeSet<LedCode>> {
+        self.device.borrow().get_led_state()
+    }
+
+    fn device_name(&self) -> String {
+        self.device.borrow().name().unwrap_or("<Unnamed device>").into()
     }
 
     pub fn bus_type(&self) -> BusType {
-        self.device.input_id().bus_type()
+        self.device.borrow().input_id().bus_type()
     }
 
     pub fn product(&self) -> u16 {
-        self.device.input_id().product()
+        self.device.borrow().input_id().product()
     }
 
     pub fn vendor(&self) -> u16 {
-        self.device.input_id().vendor()
+        self.device.borrow().input_id().vendor()
     }
 
-    pub fn to_info(&self) -> InputDeviceInfo<'_> {
+    pub fn to_info(&self) -> InputDeviceInfo {
         InputDeviceInfo {
             name: self.device_name(),
             product: self.product(),
             vendor: self.vendor(),
-            path: &self.path,
+            path: self.path.clone(),
         }
     }
-}
 
-impl InputDevice {
     pub fn is_input_device(&self, device_filter: &[String], ignore_filter: &[String], mouse: bool) -> bool {
         if self.device_name() == Self::current_name() {
             return false;
@@ -355,7 +360,7 @@ impl InputDevice {
 
     fn is_keyboard(&self) -> bool {
         // Credit: https://github.com/mooz/xkeysnail/blob/bf3c93b4fe6efd42893db4e6588e5ef1c4909cfb/xkeysnail/input.py#L17-L32
-        match self.device.supported_keys() {
+        match self.device.borrow().supported_keys() {
             Some(keys) => keys.contains(Key::KEY_SPACE) && keys.contains(Key::KEY_A) && keys.contains(Key::KEY_Z),
             None => false,
         }
@@ -363,11 +368,12 @@ impl InputDevice {
 
     fn is_mouse(&self) -> bool {
         // Xremap doesn't support absolute device so will break them.
-        if self.device.supported_absolute_axes().is_some() {
+        if self.device.borrow().supported_absolute_axes().is_some() {
             debug!("Ignoring absolute device {:18} {}", self.path.display(), self.device_name());
             return false;
         }
         self.device
+            .borrow()
             .supported_keys()
             .is_some_and(|keys| keys.contains(Key::BTN_LEFT))
     }
