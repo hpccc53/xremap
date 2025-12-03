@@ -872,7 +872,7 @@ impl MultiPurposeKeyState {
         }
     }
 
-    // Other keys where pressed, so the multipurpose key
+    // Other keys were pressed, so the multipurpose key
     // should emit presses of its held-value.
     fn force_held(&mut self) -> Vec<(Key, i32)> {
         let press = match self.alone_timeout_at {
