@@ -6,6 +6,10 @@ use std::thread::sleep;
 use std::time::{Duration, SystemTime};
 
 const DELAY: Duration = Duration::from_millis(10);
+/// Allow for inconsistency in test cases. Tests measure time
+/// from event start to sleep_if_needed returns, but the time that
+/// actually matters is from _previous_event_ start to sleep_if_needed returns.
+const MINIMUM_DELAY: Duration = Duration::from_millis(9);
 
 fn get_handler() -> ThrottleEmit {
     let handler = ThrottleEmit::new(DELAY);
@@ -18,7 +22,7 @@ fn get_handler() -> ThrottleEmit {
 fn has_delay(handler: &mut ThrottleEmit, key_event: KeyEvent) -> anyhow::Result<bool> {
     let time = SystemTime::now();
     handler.sleep_if_needed(KeyCode(key_event.code()), key_event.value());
-    Ok(time.elapsed()? > DELAY)
+    Ok(time.elapsed()? > MINIMUM_DELAY)
 }
 
 #[test]
