@@ -16,6 +16,14 @@ This experimental fork is compatible with xremap in the following way:
 
 Changes made on top of xremap:
 
+### Remove repeat events from free_hold before decision [PR 14](https://github.com/hpccc53/xremap/pull/14)
+
+There should be no purpose for emitting repeat events. Because the multipurpose key does not emit press before decision,
+so it's logical inconsistent to emit repeat events. When trying it manually the repeat events are
+also just ignored.
+
+Note: I believe it's a regression introduced here: [feat: no timeout hold option ](https://github.com/xremap/xremap/pull/705/commits/643f4bf801013240526d174755f70f7811895439). Where the `held_down` check should also have been used in the repeat-function.
+
 ### Add all mouse buttons to output device [PR 6](https://github.com/hpccc53/xremap/pull/6)
 
 Make it possible to emit all mouse buttons from a config file. Before it was only possible to click some of the mouse buttons.
