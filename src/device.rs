@@ -4,7 +4,7 @@ extern crate nix;
 use anyhow::bail;
 use derive_where::derive_where;
 use evdev::uinput::VirtualDevice;
-use evdev::{AttributeSet, BusType, Device, InputEvent, InputId, KeyCode as Key, RelativeAxisCode};
+use evdev::{AttributeSet, BusType, Device, InputEvent, InputId, KeyCode as Key, LedCode, RelativeAxisCode};
 use log::debug;
 use nix::sys::inotify::{AddWatchFlags, InitFlags, Inotify};
 use std::cell::RefCell;
@@ -277,6 +277,17 @@ impl InputDevice {
 
     pub fn fetch_events(&self) -> io::Result<Vec<InputEvent>> {
         Ok(self.device.borrow_mut().fetch_events()?.collect())
+    }
+
+    /// Returns None if the device does not support the LED.
+    pub fn get_led_state(&self, led_code: LedCode) -> io::Result<Option<bool>> {
+        match self.device.borrow().supported_leds() {
+            Some(supported) if supported.contains(led_code) => {
+                // LED is supported so get_led_state() gives the right result. Otherwise it would just say it's off.
+                Ok(Some(self.device.borrow().get_led_state()?.contains(led_code)))
+            }
+            _ => Ok(None),
+        }
     }
 
     fn device_name(&self) -> String {

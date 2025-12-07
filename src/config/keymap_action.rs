@@ -37,6 +37,12 @@ pub enum KeymapAction {
     EscapeNextKey(bool),
     #[serde(deserialize_with = "deserialize_sleep")]
     Sleep(u64),
+    #[serde(deserialize_with = "deserialize_num_lock")]
+    NumLock(bool),
+    #[serde(deserialize_with = "deserialize_caps_lock")]
+    CapsLock(bool),
+    #[serde(deserialize_with = "deserialize_scroll_lock")]
+    ScrollLock(bool),
 
     // Internals
     #[serde(skip)]
@@ -155,6 +161,51 @@ where
         }
     }
     Err(de::Error::custom("not a map with a single \"with_mark\" key"))
+}
+
+fn deserialize_num_lock<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let mut action = HashMap::<String, bool>::deserialize(deserializer)?;
+
+    if let Some(b) = action.remove("numlock") {
+        if action.is_empty() {
+            return Ok(b);
+        }
+    }
+
+    Err(de::Error::custom("not a map with a single \"numlock\" key"))
+}
+
+fn deserialize_caps_lock<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let mut action = HashMap::<String, bool>::deserialize(deserializer)?;
+
+    if let Some(b) = action.remove("capslock") {
+        if action.is_empty() {
+            return Ok(b);
+        }
+    }
+
+    Err(de::Error::custom("not a map with a single \"capslock\" key"))
+}
+
+fn deserialize_scroll_lock<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let mut action = HashMap::<String, bool>::deserialize(deserializer)?;
+
+    if let Some(b) = action.remove("scrolllock") {
+        if action.is_empty() {
+            return Ok(b);
+        }
+    }
+
+    Err(de::Error::custom("not a map with a single \"scrolllock\" key"))
 }
 
 fn deserialize_escape_next_key<'de, D>(deserializer: D) -> Result<bool, D::Error>
