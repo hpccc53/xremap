@@ -607,6 +607,15 @@ impl EventHandler {
             }
             KeymapAction::SetMark(set) => self.mark_set = *set,
             KeymapAction::WithMark(key_press) => self.send_key_press_and_release(&self.with_mark(key_press)),
+            KeymapAction::NumLock(b) => {
+                self.send_action(Action::NumLock(*b));
+            }
+            KeymapAction::CapsLock(b) => {
+                self.send_action(Action::CapsLock(*b));
+            }
+            KeymapAction::ScrollLock(b) => {
+                self.send_action(Action::ScrollLock(*b));
+            }
             KeymapAction::EscapeNextKey(escape_next_key) => self.escape_next_key = *escape_next_key,
             KeymapAction::Sleep(millis) => self.send_action(Action::Delay(Duration::from_millis(*millis))),
             KeymapAction::SetExtraModifiers(keys) => {

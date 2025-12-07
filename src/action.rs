@@ -16,6 +16,12 @@ pub enum Action {
     // InputEvent of any event types. It's discouraged to use this for testing because
     // we don't have full control over timeval and it's not pattern-matching friendly.
     InputEvent(InputEvent),
+    // Set the state of numlock key.
+    NumLock(bool),
+    // Set the state of capslock key.
+    CapsLock(bool),
+    // Set the state of scrolllock key.
+    ScrollLock(bool),
     // Run a command
     Command(Vec<String>),
     // keypress_delay_ms

@@ -16,6 +16,32 @@ This experimental fork is compatible with xremap in the following way:
 
 Changes made on top of xremap:
 
+### Add actions to set lock key state [PR 8](https://github.com/hpccc53/xremap/pull/8)
+
+It's usually only possible to toggle the `capslock`. These actions make et possible to
+set the state of `capslock`, `numlock` and `scrolllock`.
+
+```yml
+keymap:
+  - remap:
+      control-j:
+        - numlock: true
+        - capslock: false
+        - scrolllock: false
+```
+
+If the LED states are out of sync with what the desktop thinks the lock key state is, then these actions will not work.
+But in that case it's possible to sync the LEDs. It takes some time for the desktop to register it and set the LED to the correct state, so the sleep is needed.
+
+```yml
+keymap:
+  - remap:
+      control-k:
+        - capslock
+        - sleep: 10
+        - capslock: false
+```
+
 ### Add tap preferred to multipurpose key (tap-hold key) [PR 15](https://github.com/hpccc53/xremap/pull/15)
 
 The tap-hold key has only supported hold-preferred until now. With this change there
