@@ -46,7 +46,6 @@ wlroots = ["wayland-client", "wayland-protocols-wlr"]
 udev = ["dep:udev"]
 niri = ["niri-ipc"]
 device-test = []
-hyprland = ["dep:hyprland"]
 
 [profile.release]
 codegen-units = 1
