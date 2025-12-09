@@ -30,7 +30,15 @@ impl ActionDispatcher {
     }
 
     // Execute Actions created by EventHandler. This should be the only public method of ActionDispatcher.
-    pub fn on_action(&mut self, action: Action, input_devices: &HashMap<PathBuf, InputDevice>) -> anyhow::Result<()> {
+    pub fn on_action<F>(
+        &mut self,
+        action: Action,
+        mut run: F,
+        input_devices: &HashMap<PathBuf, InputDevice>,
+    ) -> anyhow::Result<()>
+    where
+        F: FnMut(&Vec<String>) -> anyhow::Result<bool>,
+    {
         match action {
             Action::KeyEvent(key_event) => self.on_key_event(key_event)?,
             Action::RelativeEvent(relative_event) => self.on_relative_event(relative_event)?,
@@ -56,7 +64,16 @@ impl ActionDispatcher {
             Action::ScrollLock(b) => {
                 self.set_lock_key_state(input_devices, Key::KEY_SCROLLLOCK, LedCode::LED_SCROLLL, b)?
             }
-            Action::Command(command) => self.run_command(command),
+            Action::Command(command) => match run(&command) {
+                Ok(false) => {
+                    // could not run command, proceed to fork
+                    self.run_command(command);
+                }
+                Ok(true) => {}
+                Err(e) => {
+                    debug!("{command:?} failed: {e:?}");
+                }
+            },
             Action::Delay(duration) => thread::sleep(duration),
         }
         Ok(())
