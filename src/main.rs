@@ -268,14 +268,13 @@ fn handle_input_events(
     dispatcher: &mut ActionDispatcher,
     config: &Config,
 ) -> anyhow::Result<bool> {
-    let events = match input_device.fetch_events().map_err(|e| (e.raw_os_error(), e)) {
-        Err((Some(ENODEV), _)) => {
+    let events = match input_device.fetch_events() {
+        Err(err) if err.raw_os_error() == Some(ENODEV) => {
             // The device doesn't exist anymore.
             return Ok(false);
         }
-        Err((_, error)) => Err(error).context("Error fetching input events"),
-        Ok(events) => Ok(events),
-    }?;
+        events => events.context("Error fetching input events")?,
+    };
 
     let info = input_device.to_info();
     let input_events = events.iter().map(|e| Event::new(info.clone(), *e)).collect();
