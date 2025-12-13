@@ -120,7 +120,7 @@ fn main() -> anyhow::Result<()> {
         ignore: ignore_filter,
         mouse,
         watch,
-        configs,
+        configs: config_paths,
         completions,
         output_device_name,
         product,
@@ -139,10 +139,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     // Configuration
-    let config_paths = match configs[..] {
-        [] => panic!("config is set, if not completions"),
-        _ => configs,
-    };
+    assert!(!config_paths.is_empty(), "config is set, if not completions");
 
     let mut config = match config::load_configs(&config_paths) {
         Ok(config) => config,
