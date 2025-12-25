@@ -136,8 +136,6 @@ impl KdeClient {
     }
 
     fn connect(&mut self) -> Result<(), ConnectionError> {
-        load_kwin_script()?;
-
         let active_window = Arc::clone(&self.active_window);
         let (tx, rx) = channel();
 
@@ -165,7 +163,12 @@ impl KdeClient {
                 Err(err) => tx.send(Err(err)).unwrap(),
             }
         });
-        rx.recv().unwrap()
+
+        // Wait for server to start
+        rx.recv().unwrap()?;
+
+        // The script sends a message right away, so it's started after the server.
+        load_kwin_script()
     }
 }
 
