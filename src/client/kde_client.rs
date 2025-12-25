@@ -168,7 +168,32 @@ impl KdeClient {
         rx.recv().unwrap()?;
 
         // The script sends a message right away, so it's started after the server.
-        load_kwin_script()
+        load_kwin_script()?;
+
+        // Busy wait 100ms, so the first use returns a valid value.
+        //
+        // An alternative would be to connect to KDE earlier, but it's hard figure out
+        // when KDE is ready. We can't just make a connection when xremap is started, because
+        // users could start xremap before KDE is ready. So reconnect logic would need
+        // to be implemented, and it seems harder to implement, with all the state this client has.
+        //
+        // The busy wait can't cause breaking changes, because it's purely happening
+        // within the main thread. It's a simple solution, and it allows delaying connection
+        // to the very last moment. So kde_client works as all the other clients.
+        for i in 0..10 {
+            if let Ok(aw) = self.active_window.lock() {
+                if !aw.title.is_empty() {
+                    debug!("Connected to KDE within: {}ms", i * 10);
+                    return Ok(());
+                }
+            }
+
+            thread::sleep(Duration::from_millis(10));
+        }
+
+        debug!("Connection to KDE was not established within 100ms");
+
+        Ok(())
     }
 }
 
