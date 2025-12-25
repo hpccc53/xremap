@@ -17,6 +17,14 @@ This experimental fork is compatible with xremap in the following way:
 
 Changes made on top of xremap:
 
+### Add actions to set lock key state [PR 18](https://github.com/hpccc53/xremap/pull/18)
+
+The KDE client had a problem, where it didn't work until a application-specific remap
+was triggered (and failed), and the user then switched window. At that point application-specific
+remapping worked as expected.
+
+This PR ensures the remapping works when used the first time.
+
 ### Add actions to set lock key state [PR 8](https://github.com/hpccc53/xremap/pull/8)
 
 It's usually only possible to toggle the `capslock`. These actions make et possible to
