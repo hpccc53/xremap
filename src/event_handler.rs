@@ -328,7 +328,7 @@ impl EventHandler {
                 match value {
                     PRESS => {
                         // Use these for user input validation too.
-                        let hold_threshold = if hold_threshold < tap_timeout {
+                        let hold_threshold = if hold_threshold <= tap_timeout {
                             hold_threshold
                         } else {
                             warn!("hold_threshold_millis must be smaller than tap_timeout_millis. Setting hold_threshold_millis to tap_timeout_millis: {:?}", tap_timeout);
