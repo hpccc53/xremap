@@ -1,8 +1,6 @@
-use anyhow::bail;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use std::thread::sleep;
-use std::time::Duration;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 pub fn until<F: FnMut() -> bool>(mut callback: F, timeout: Duration, message: impl Into<String>) -> Result<()> {
     let start = Instant::now();
