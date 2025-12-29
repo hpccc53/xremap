@@ -173,21 +173,21 @@ impl ActionDispatcher {
                                 exit(0);
                             }
                             Err(e) => {
-                                error!("Error running command: {e:?}");
+                                error!("Error running command: {command:?}\n{e:?}");
                                 exit(1);
                             }
                         }
                     }
                     Ok(Fork::Parent(_)) => exit(0),
                     Err(e) => {
-                        error!("Error spawning process: {e:?}");
+                        error!("Error spawning process: {command:?}\n{e:?}");
                         exit(1);
                     }
                 }
             }
             // Parent should simply continue.
             Ok(Fork::Parent(_)) => (),
-            Err(e) => error!("Error spawning process: {e:?}"),
+            Err(e) => error!("Error spawning process: {command:?}\n{e:?}"),
         }
     }
 }
