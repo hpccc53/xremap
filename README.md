@@ -51,7 +51,7 @@ keymap:
         - capslock: false
 ```
 
-### Add tap preferred to multipurpose key (tap-hold key) [PR 15](https://github.com/hpccc53/xremap/pull/15)
+### Add tap preferred to multipurpose key (tap-hold key) [PR 15](https://github.com/hpccc53/xremap/pull/15), [PR 23](https://github.com/hpccc53/xremap/pull/23)
 
 The tap-hold key has only supported hold-preferred until now. With this change there
 is also support for a tap-preferred version. And even a mixture based on how the
