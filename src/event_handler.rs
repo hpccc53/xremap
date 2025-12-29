@@ -347,7 +347,7 @@ impl EventHandler {
                                 },
                                 tap_timeout_at: if free_hold {
                                     // An approximation of never.
-                                    Instant::now() + Duration::from_hours(1000)
+                                    Instant::now() + Duration::from_secs_f32(1e10)
                                 } else {
                                     Instant::now() + tap_timeout
                                 },
