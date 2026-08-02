@@ -10,7 +10,7 @@ use evdev::uinput::VirtualDevice;
 use evdev::{Device, KeyCode as Key};
 use indoc::indoc;
 use std::time::Duration;
-use xremap::private::select_input_devices;
+use xremap::device::select_input_devices;
 
 mod common;
 
@@ -22,6 +22,27 @@ pub fn test_no_input_device_match() {
         "Failed to prepare input devices: No device was selected!",
         select_input_devices(&device_filter, &vec![], false, false, "own_device"),
     );
+}
+
+#[test]
+pub fn test_device_without_keys_is_not_selected_automatically() -> Result<()> {
+    // Create device without any output events.
+    let name = get_random_device_name();
+    let _device = VirtualDevice::builder()?.name(&name).build()?;
+    let _ = wait_for_device(&name)?;
+
+    // Automatically select devices
+    let devices = select_input_devices(&[], &vec![], false, false, "own_device")?;
+
+    assert_eq!(
+        0,
+        devices
+            .iter()
+            .filter(|(_, device)| device.device_name() == name)
+            .count()
+    );
+
+    Ok(())
 }
 
 #[test]

@@ -1,6 +1,5 @@
 use crate::config::key_press::KeyPress;
 use crate::config::keymap_action::KeymapAction;
-use crate::config::keymap_action_without_args::ActionWithoutArgs;
 use crate::config::modmap_operator::ModmapOperator;
 use crate::config::Config;
 use crate::event_handler::{DISGUISED_EVENT_OFFSETTER, KEY_MATCH_ANY};
@@ -78,8 +77,6 @@ fn traverse_remap(keymap: &IndexMap<KeyPress, Vec<KeymapAction>>) -> anyhow::Res
 }
 
 fn traverse_actions(actions: &Vec<KeymapAction>) -> anyhow::Result<()> {
-    check_specific_actions(actions)?;
-
     for action in actions {
         match action {
             KeymapAction::Remap(remap) => {
@@ -92,26 +89,6 @@ fn traverse_actions(actions: &Vec<KeymapAction>) -> anyhow::Result<()> {
                 traverse_keymap_output_keys(&vec![*key])?;
             }
             _ => {}
-        }
-    }
-
-    Ok(())
-}
-
-fn check_specific_actions(actions: &Vec<KeymapAction>) -> anyhow::Result<()> {
-    let mut actions_allowed = true;
-    for action in actions {
-        if !actions_allowed {
-            bail!("Actions after exit or reload_config are not allowed.")
-        }
-
-        if let KeymapAction::Action(inner_action) = action {
-            match inner_action {
-                ActionWithoutArgs::Exit | ActionWithoutArgs::ReloadConfig => {
-                    actions_allowed = false;
-                }
-                _ => {}
-            };
         }
     }
 

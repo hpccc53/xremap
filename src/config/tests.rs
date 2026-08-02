@@ -1,5 +1,5 @@
 use crate::config::validation::validate_config_file;
-use crate::config::Config;
+use crate::Config;
 use indoc::indoc;
 
 #[test]
@@ -729,7 +729,7 @@ fn yaml_assert_parse(yaml: &str) {
     }
 }
 
-pub fn assert_invalid_config(config: &str, expected: &str) {
+fn assert_invalid_config(config: &str, expected: &str) {
     let errmsg = validate_config_file(&serde_yaml::from_str::<Config>(config).unwrap())
         .unwrap_err()
         .to_string();

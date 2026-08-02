@@ -21,7 +21,6 @@ Each method has pros and cons, it's worth checking out the pages before choosing
 - [Configuration options](reference_config_options.md)
 - [Key names](reference_key_names.md)
 - [Actions](reference_actions.md)
-- [Key sequence](reference_key_sequence.md)
 - [Multi-purpose key (alias: tap-hold key)](reference_multipurpose_key.md)
 - [Press/release key](reference_press_release_key.md)
 
@@ -30,7 +29,6 @@ Each method has pros and cons, it's worth checking out the pages before choosing
 - [Double tap](reference_double_tap.md)
 - [Chords (simultaneous keys)](reference_chords.md)
 - [FreeBSD](reference_freebsd.md)
-- [Scripting](reference_scripting.md)
 
 ### Troubleshooting
 
@@ -38,4 +36,4 @@ Each method has pros and cons, it's worth checking out the pages before choosing
 
 ### Upgrade guide
 
-- [Upgrade to v0.15.0](../UPGRADE.md#Upgrade-to-v0.15)
+- [Upgrade to v.0.15.0](../UPGRADE.md#Upgrade-to-v0.15)

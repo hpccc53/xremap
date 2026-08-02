@@ -1,4 +1,5 @@
-use crate::main_impl::MainAction;
+use crate::config::{load_configs, Config};
+use crate::main_controller::MainController;
 use anyhow::Result;
 use nix::sys::inotify::{AddWatchFlags, InitFlags, Inotify, InotifyEvent};
 use nix::sys::time::TimeSpec;
@@ -11,13 +12,14 @@ use std::time::Duration;
 pub struct ConfigWatcher {
     files: Vec<PathBuf>,
     debounce: Option<Duration>,
+    notifications: bool,
     timer: TimerFd,
     inotify: Inotify,
     change_pending: bool,
 }
 
 impl ConfigWatcher {
-    pub fn new(watch: bool, files: Vec<PathBuf>, debounce_ms: u64) -> Result<Option<Self>> {
+    pub fn new(watch: bool, files: Vec<PathBuf>, debounce_ms: u64, notifications: bool) -> Result<Option<Self>> {
         if !watch {
             return Ok(None);
         }
@@ -40,6 +42,7 @@ impl ConfigWatcher {
         let this = Self {
             files,
             debounce,
+            notifications,
             timer: TimerFd::new(ClockId::CLOCK_MONOTONIC, TimerFlags::empty())?,
             inotify,
             change_pending: false,
@@ -56,11 +59,9 @@ impl ConfigWatcher {
         self.inotify.as_fd()
     }
 
-    pub fn handle(&mut self, readable_fds: Vec<RawFd>) -> Result<Option<MainAction>> {
+    pub fn handle(&mut self, readable_fds: Vec<RawFd>, mainctrl: &mut MainController) -> Result<Option<Config>> {
         if readable_fds.contains(&self.timer.as_fd().as_raw_fd()) {
-            self.change_pending = false;
-            self.timer.unset()?;
-            return Ok(Some(MainAction::ReloadConfig));
+            return Ok(Some(self.get_config(mainctrl)?));
         }
 
         if let Ok(events) = self.inotify.read_events() {
@@ -73,13 +74,31 @@ impl ConfigWatcher {
                             .set(Expiration::OneShot(TimeSpec::from_duration(debounce)), TimerSetTimeFlags::empty())?;
                     }
                     None => {
-                        return Ok(Some(MainAction::ReloadConfig));
+                        return Ok(Some(self.get_config(mainctrl)?));
                     }
                 };
             }
         }
 
         Ok(None)
+    }
+
+    fn get_config(&mut self, mainctrl: &mut MainController) -> Result<Config> {
+        self.change_pending = false;
+        self.timer.unset()?;
+        let result = load_configs(&self.files);
+        match &result {
+            Ok(_) => {
+                println!("Reloading Config");
+            }
+            Err(err) => {
+                if self.notifications {
+                    mainctrl.show_popup("Config error", Some(&err.to_string()));
+                }
+            }
+        }
+
+        result.map_err(|err| anyhow::format_err!("{err}"))
     }
 
     fn config_changed(&self, events: Vec<InotifyEvent>) -> Result<bool> {

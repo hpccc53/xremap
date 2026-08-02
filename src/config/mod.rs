@@ -1,33 +1,33 @@
 pub mod application;
-pub mod deserializers;
+mod deserializers;
 pub mod device;
-pub mod expmap;
+mod expmap;
 pub mod expmap_operator;
 pub mod expmap_simkey;
-pub mod key;
+mod key;
 pub mod key_press;
 pub mod keymap;
 pub mod keymap_action;
-pub mod keymap_action_without_args;
-pub mod modmap;
+mod modmap;
 pub mod modmap_operator;
 pub mod nested_remap;
 #[cfg(test)]
 mod tests;
-pub mod validation;
+mod validation;
 
-use crate::config::expmap::Expmap;
+pub use crate::config::expmap::Expmap;
 use crate::config::key::parse_key;
-use crate::config::keymap::{build_keymap_table, Keymap, KeymapEntry};
-use crate::config::validation::validate_config_file;
+use crate::config::keymap::{build_keymap_table, KeymapEntry};
 use crate::event_handler::DISGUISED_EVENT_OFFSETTER;
 use crate::event_handler::MODIFIER_KEYS;
 use evdev::KeyCode as Key;
+use keymap::Keymap;
 use modmap::Modmap;
 use serde::{de::IgnoredAny, Deserialize, Deserializer};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::{error, fs};
+pub use validation::validate_config_file;
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
