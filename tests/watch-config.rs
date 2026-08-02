@@ -91,8 +91,10 @@ pub fn e2e_old_config_remains_active_when_error() -> anyhow::Result<()> {
 
 #[test]
 pub fn e2e_config_watch_is_debounced() -> anyhow::Result<()> {
+    // Github tests have been observed to take around 100ms to complete
+    // a write IO for this test case. Only this test case, which is curious.
     let mut ctrl = XremapController::builder()
-        .watch_config("config_watch_debounce_ms: 10")?
+        .watch_config("config_watch_debounce_ms: 200")?
         .build()?;
 
     std::fs::write(&ctrl.get_config_file(), "")?;
@@ -108,7 +110,7 @@ pub fn e2e_config_watch_is_debounced() -> anyhow::Result<()> {
         "},
     )?;
 
-    std::thread::sleep(std::time::Duration::from_millis(20));
+    std::thread::sleep(std::time::Duration::from_millis(300));
 
     ctrl.emit_events(&vec![key_press(KeyCode::KEY_F12)])?;
 
