@@ -16,74 +16,74 @@ on:
 env:
   CARGO_TERM_COLOR: always
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [x86_64, aarch64]
-        feature:
-          [x11, gnome, kde, hypr, wlroots, niri, cosmic, pantheon, socket]
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
-      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
-        with:
-          toolchain: stable
-          targets: ${{ matrix.arch }}-unknown-linux-musl
-      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4
-        with:
-          key: ubuntu-latest-${{ matrix.arch }}-${{ matrix.feature }}
+  # build:
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       arch: [x86_64, aarch64]
+  #       feature:
+  #         [x11, gnome, kde, hypr, wlroots, niri, cosmic, pantheon, socket]
+  #   steps:
+  #     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+  #     - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+  #       with:
+  #         toolchain: stable
+  #         targets: ${{ matrix.arch }}-unknown-linux-musl
+  #     - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4
+  #       with:
+  #         key: ubuntu-latest-${{ matrix.arch }}-${{ matrix.feature }}
 
-      - run: cargo install cross
-      - name: cross build
-        run: cross build --release --features ${{ matrix.feature }} --target=${{ matrix.arch }}-unknown-linux-musl
+  #     - run: cargo install cross
+  #     - name: cross build
+  #       run: cross build --release --features ${{ matrix.feature }} --target=${{ matrix.arch }}-unknown-linux-musl
 
-      - name: package
-        run: zip "xremap-linux-${{ matrix.arch }}-${{ matrix.feature }}.zip" xremap
-        working-directory: target/${{ matrix.arch }}-unknown-linux-musl/release
+  #     - name: package
+  #       run: zip "xremap-linux-${{ matrix.arch }}-${{ matrix.feature }}.zip" xremap
+  #       working-directory: target/${{ matrix.arch }}-unknown-linux-musl/release
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: xremap-${{ matrix.arch }}-${{ matrix.feature }}
-          path: target/${{ matrix.arch }}-unknown-linux-musl/release/xremap-linux-${{ matrix.arch }}-${{ matrix.feature }}.zip
+  #     - name: Upload artifacts
+  #       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+  #       with:
+  #         name: xremap-${{ matrix.arch }}-${{ matrix.feature }}
+  #         path: target/${{ matrix.arch }}-unknown-linux-musl/release/xremap-linux-${{ matrix.arch }}-${{ matrix.feature }}.zip
 
-  build-libc:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        feature: [udev]
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
-      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
-        with:
-          toolchain: stable
-          targets: x86_64-unknown-linux-gnu
-      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4
-        with:
-          key: ubuntu-latest-glibc-${{ matrix.feature }}
+  # build-libc:
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       feature: [udev]
+  #   steps:
+  #     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+  #     - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+  #       with:
+  #         toolchain: stable
+  #         targets: x86_64-unknown-linux-gnu
+  #     - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4
+  #       with:
+  #         key: ubuntu-latest-glibc-${{ matrix.feature }}
 
-      - name: Install libudev dependencies
-        run: sudo apt-get update && sudo apt-get -y install pkg-config libudev1 libudev-dev
+  #     - name: Install libudev dependencies
+  #       run: sudo apt-get update && sudo apt-get -y install pkg-config libudev1 libudev-dev
 
-      - name: Build
-        run: cargo build --release --features ${{ matrix.feature }}
+  #     - name: Build
+  #       run: cargo build --release --features ${{ matrix.feature }}
 
-  build-freebsd:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+  # build-freebsd:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
-      - name: Compile in VM
-        uses: cross-platform-actions/action@5ea7e8e4677bd726033a10b094ba1c5762b15dee
-        with:
-          operating_system: freebsd
-          version: "15.0"
-          run: |
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
-            . "$HOME/.cargo/env"
-            cargo build
+  #     - name: Compile in VM
+  #       uses: cross-platform-actions/action@5ea7e8e4677bd726033a10b094ba1c5762b15dee
+  #       with:
+  #         operating_system: freebsd
+  #         version: "15.0"
+  #         run: |
+  #           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+  #           . "$HOME/.cargo/env"
+  #           cargo build
 
   test:
     runs-on: ubuntu-latest
@@ -100,86 +100,86 @@ jobs:
       - name: Run device tests
         run: sudo -E env "PATH=$PATH" cargo test --tests --features device-test
 
-  # Release xremap binaries on GitHub
-  release:
-    runs-on: ubuntu-latest
-    needs:
-      - build
-      - test
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
-    steps:
-      # Fetch x86_64 binary
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-x86_64-x11, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-x86_64-gnome, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-x86_64-kde, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-x86_64-hypr, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-x86_64-wlroots, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-x86_64-niri, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-x86_64-cosmic, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-x86_64-pantheon, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-x86_64-socket, path: package/ }
+  # # Release xremap binaries on GitHub
+  # release:
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     - build
+  #     - test
+  #   if: ${{ startsWith(github.ref, 'refs/tags/') }}
+  #   steps:
+  #     # Fetch x86_64 binary
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-x86_64-x11, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-x86_64-gnome, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-x86_64-kde, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-x86_64-hypr, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-x86_64-wlroots, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-x86_64-niri, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-x86_64-cosmic, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-x86_64-pantheon, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-x86_64-socket, path: package/ }
 
-      # Fetch aarch64 binary
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-aarch64-x11, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-aarch64-gnome, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-aarch64-kde, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-aarch64-hypr, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-aarch64-wlroots, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-aarch64-niri, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-aarch64-cosmic, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-aarch64-pantheon, path: package/ }
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with: { name: xremap-aarch64-socket, path: package/ }
+  #     # Fetch aarch64 binary
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-aarch64-x11, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-aarch64-gnome, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-aarch64-kde, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-aarch64-hypr, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-aarch64-wlroots, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-aarch64-niri, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-aarch64-cosmic, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-aarch64-pantheon, path: package/ }
+  #     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+  #       with: { name: xremap-aarch64-socket, path: package/ }
 
-      # Release binary
-      - name: Release
-        run: |
-          set -e
-          export VERSION=$(echo "$GITHUB_REF" | sed -e 's!refs/tags/!!')
-          curl -L "https://github.com/tcnksm/ghr/releases/download/${GHR_VERSION}/ghr_${GHR_VERSION}_linux_amd64.tar.gz" -o ghr.tar.gz
-          printf "%s\n" "bdf8f7134ac5362c18debf34e10fd50b5141d9d7ae4d9f3863b67236a31012eb  ghr.tar.gz" | sha256sum -c --strict
-          tar xvzf ghr.tar.gz
-          "ghr_${GHR_VERSION}_linux_amd64/ghr" -u xremap -r xremap -replace -n "$VERSION" "$VERSION" package/
-        env:
-          GHR_VERSION: v0.17.0
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     # Release binary
+  #     - name: Release
+  #       run: |
+  #         set -e
+  #         export VERSION=$(echo "$GITHUB_REF" | sed -e 's!refs/tags/!!')
+  #         curl -L "https://github.com/tcnksm/ghr/releases/download/${GHR_VERSION}/ghr_${GHR_VERSION}_linux_amd64.tar.gz" -o ghr.tar.gz
+  #         printf "%s\n" "bdf8f7134ac5362c18debf34e10fd50b5141d9d7ae4d9f3863b67236a31012eb  ghr.tar.gz" | sha256sum -c --strict
+  #         tar xvzf ghr.tar.gz
+  #         "ghr_${GHR_VERSION}_linux_amd64/ghr" -u xremap -r xremap -replace -n "$VERSION" "$VERSION" package/
+  #       env:
+  #         GHR_VERSION: v0.17.0
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Publish xremap to crates.io
-  publish:
-    runs-on: ubuntu-latest
-    needs:
-      - build
-      - test
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
-      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4
-        with:
-          key: ubuntu-latest
+  # # Publish xremap to crates.io
+  # publish:
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     - build
+  #     - test
+  #   if: ${{ startsWith(github.ref, 'refs/tags/') }}
+  #   steps:
+  #     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+  #     - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+  #       with:
+  #         toolchain: stable
+  #     - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4
+  #       with:
+  #         key: ubuntu-latest
 
-      # Release crate
-      - name: cargo login
-        run: cargo login "$CARGO_TOKEN"
-        env:
-          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
-      - run: cargo publish
+  #     # Release crate
+  #     - name: cargo login
+  #       run: cargo login "$CARGO_TOKEN"
+  #       env:
+  #         CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+  #     - run: cargo publish
