@@ -95,50 +95,10 @@ pub fn e2e_config_watch_is_debounced() -> anyhow::Result<()> {
         .watch_config("config_watch_debounce_ms: 10")?
         .build()?;
 
-    println!(
-        "writing 1: {:?}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_millis()
-    );
-
     std::fs::write(&ctrl.get_config_file(), "")?;
-
-    println!(
-        "writing 2: {:?}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_millis()
-    );
     std::fs::write(&ctrl.get_config_file(), "partial_config")?;
-
-    println!(
-        "writing 3: {:?}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_millis()
-    );
     std::fs::write(&ctrl.get_config_file(), "")?;
-
-    println!(
-        "writing 4: {:?}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_millis()
-    );
     std::fs::write(&ctrl.get_config_file(), "other problem")?;
-
-    println!(
-        "writing 5: {:?}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_millis()
-    );
     std::fs::write(
         &ctrl.get_config_file(),
         indoc! {"
@@ -148,23 +108,7 @@ pub fn e2e_config_watch_is_debounced() -> anyhow::Result<()> {
         "},
     )?;
 
-    println!(
-        "before timeout: {:?}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_millis()
-    );
-
     std::thread::sleep(std::time::Duration::from_millis(20));
-
-    println!(
-        "after timeout: {:?}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_millis()
-    );
 
     ctrl.emit_events(&vec![key_press(KeyCode::KEY_F12)])?;
 
