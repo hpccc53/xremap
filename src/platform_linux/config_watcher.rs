@@ -58,6 +58,13 @@ impl ConfigWatcher {
 
     pub fn handle(&mut self, readable_fds: Vec<RawFd>) -> Result<Option<MainAction>> {
         if readable_fds.contains(&self.timer.as_fd().as_raw_fd()) {
+            println!(
+                "timer fired: {:?}",
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis()
+            );
             self.change_pending = false;
             self.timer.unset()?;
             return Ok(Some(MainAction::ReloadConfig));
@@ -67,6 +74,13 @@ impl ConfigWatcher {
             if self.config_changed(events)? {
                 match self.debounce {
                     Some(debounce) => {
+                        println!(
+                            "config_changed: {:?}",
+                            std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .unwrap()
+                                .as_millis()
+                        );
                         // Could already be set, but reset is the debounce.
                         self.change_pending = true;
                         self.timer

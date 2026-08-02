@@ -264,7 +264,13 @@ pub fn xremap_cli(mut plugin: impl Plugin) -> anyhow::Result<()> {
             }
             MainAction::ReloadConfig => match load_configs(&config_paths) {
                 Ok(c) => {
-                    println!("Reloading Config");
+                    println!(
+                        "Reloading Config: {:?}",
+                        std::time::SystemTime::now()
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .unwrap()
+                            .as_millis()
+                    );
                     println!("{:?}", c);
                     // The new config is only partially used.
                     config = c;
