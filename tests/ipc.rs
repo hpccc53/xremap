@@ -121,6 +121,16 @@ pub fn e2e_ipc_key_injection_is_disabled_by_default() -> anyhow::Result<()> {
 }
 
 #[test]
+pub fn e2e_ipc_inject_invalid_key_cur() -> anyhow::Result<()> {
+    let ctrl = XremapController::builder()
+        .ipc_inject(true)
+        .config_with_ipc("")?
+        .build()?;
+    assert_eq!("err invalid key: Unknown key 'abcdef'\n", ctrl.ipc_client_failure(vec!["key", "abcdef"])?);
+    ctrl.kill()
+}
+
+#[test]
 pub fn e2e_ipc_injected_keys_bypass_remapping_by_default() -> anyhow::Result<()> {
     let mut ctrl = XremapController::builder()
         .ipc_inject(true)
