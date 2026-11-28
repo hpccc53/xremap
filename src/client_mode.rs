@@ -25,7 +25,6 @@ pub enum ClientCommand {
         #[arg(long)]
         #[serde(skip_serializing_if = "Option::is_none")]
         device: Option<String>,
-        /// Pipeline layer the chords enter at: raw (default), keymap, modmap, expmap.
         #[arg(long)]
         #[serde(skip_serializing_if = "Option::is_none")]
         scope: Option<crate::ipc_server::InjectScope>,
@@ -39,7 +38,6 @@ pub enum ClientCommand {
         #[arg(long)]
         #[serde(skip_serializing_if = "Option::is_none")]
         device: Option<String>,
-        /// Pipeline layer the chords enter at: raw (default), keymap, modmap, expmap.
         #[arg(long)]
         #[serde(skip_serializing_if = "Option::is_none")]
         scope: Option<crate::ipc_server::InjectScope>,
@@ -53,7 +51,6 @@ pub enum ClientCommand {
         #[arg(long)]
         #[serde(skip_serializing_if = "Option::is_none")]
         device: Option<String>,
-        /// Pipeline layer the chords enter at: raw (default), keymap, modmap, expmap.
         #[arg(long)]
         #[serde(skip_serializing_if = "Option::is_none")]
         scope: Option<crate::ipc_server::InjectScope>,
