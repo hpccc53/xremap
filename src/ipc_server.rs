@@ -12,7 +12,9 @@ use std::time::{Duration, Instant};
 
 use crate::action::Action;
 use crate::config::key::parse_key;
+use crate::config::key_aliases::pre_load_key_aliases;
 use crate::config::key_combo::{parse_modifier_alias, Modifier};
+use crate::config::ConfigFiletype;
 use crate::device::InputDeviceInfo;
 use crate::event::{Event, KeyEvent, KeyValue};
 use evdev::KeyCode as Key;
@@ -106,6 +108,7 @@ impl Chord {
     /// A lone modifier name (`shift`) is the left-hand key, so `keydown shift`
     /// can hold a modifier that survives across commands.
     pub fn parse(input: &str) -> Result<Chord, String> {
+        pre_load_key_aliases("", ConfigFiletype::Yaml).map_err(|err| err.to_string())?;
         let parts: Vec<&str> = input.split('+').collect();
         let (key_part, modifier_parts) = parts.split_last().ok_or("empty chord")?;
         let mut modifiers = Vec::new();
@@ -649,18 +652,7 @@ impl Drop for IpcServer {
 mod tests {
     use super::*;
 
-    /// `parse_key` consults the global key-alias table, which is normally
-    /// populated while parsing a config file. Set it once here so these tests
-    /// do not depend on other tests having parsed a config first.
-    fn init_aliases() {
-        static ONCE: std::sync::Once = std::sync::Once::new();
-        ONCE.call_once(|| {
-            crate::config::key_aliases::pre_load_key_aliases("", crate::config::ConfigFiletype::Yaml).unwrap();
-        });
-    }
-
     fn cmd(line: &str, mode: &str, inject: bool) -> (Option<IpcCommand>, Reply) {
-        init_aliases();
         handle_command(line, mode, inject)
     }
 
@@ -989,7 +981,6 @@ mod tests {
 
     #[test]
     fn key_down_up_actions_halves() {
-        init_aliases();
         let chord = Chord::parse("ctrl+a").unwrap();
         let keys = |actions: Vec<Action>| -> Vec<(Key, KeyValue)> {
             actions
@@ -1046,7 +1037,6 @@ mod tests {
 
     #[test]
     fn chord_to_actions_press_release_order() {
-        init_aliases();
         let chord = Chord::parse("ctrl+a").unwrap();
         let actions = chord.to_actions(true, true);
         let keys: Vec<(Key, KeyValue)> = actions

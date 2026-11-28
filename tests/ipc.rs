@@ -128,7 +128,7 @@ pub fn e2e_ipc_key_injection_is_disabled_by_default() -> anyhow::Result<()> {
 
 #[test]
 pub fn e2e_ipc_injected_keys_enter_the_keymap() -> anyhow::Result<()> {
-    let mut ctrl = XremapController::builder()
+    let ctrl = XremapController::builder()
         .ipc_inject(true)
         .config_with_ipc(&indoc! {"
             keymap:
