@@ -3,7 +3,6 @@ use crate::platform_freebsd::{ConfigWatcher, DeviceWatcher};
 #[cfg(target_os = "linux")]
 use crate::platform_linux::{ConfigWatcher, DeviceWatcher};
 
-use crate::action::Action;
 use crate::action_dispatcher::ActionDispatcher;
 use crate::client::{print_open_windows, print_supported_desktops};
 use crate::config::{load_configs, Config};
@@ -572,7 +571,7 @@ fn execute_ipc_command(
             chords,
             phases,
         } => apply_send_key(scope, &device, &chords, phases, handler, dispatcher, config, mainctrl),
-        IpcCommand::Sleep(duration) => dispatcher.on_action(Action::Delay(duration), mainctrl),
+        IpcCommand::Sleep(duration) => dispatcher.on_action(crate::action::Action::Delay(duration), mainctrl),
     }
 }
 
