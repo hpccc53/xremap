@@ -1,7 +1,7 @@
 #![cfg(feature = "device-test")]
 
-use crate::common::key_press;
 use crate::common::xremap_controller::XremapController;
+use crate::common::{assert_events, key_press};
 use evdev::KeyCode;
 use indoc::indoc;
 use std::io::{BufRead, BufReader, Write};
@@ -117,6 +117,35 @@ pub fn e2e_ipc_key_injection_is_disabled_by_default() -> anyhow::Result<()> {
     assert_eq!("err injection disabled\n", ctrl.ipc_client_failure(vec!["keydown", "shift"])?);
     assert_eq!("err injection disabled\n", ctrl.ipc_client_failure(vec!["sleep", "1"])?);
     assert_eq!("pong\n", ctrl.ipc_client(vec!["ping"])?);
+    ctrl.kill()
+}
+
+#[test]
+pub fn e2e_ipc_injected_keys_bypass_remapping_by_default() -> anyhow::Result<()> {
+    let mut ctrl = XremapController::builder()
+        .ipc_inject(true)
+        .config_with_ipc(&indoc! {"
+            keymap:
+                - remap:
+                    f23: null
+                    f24: null
+            ",
+        })?
+        .build()?;
+
+    assert_eq!("ok\n", ctrl.ipc_client(vec!["key", "f23"])?);
+    assert_eq!("ok\n", ctrl.ipc_client(vec!["key", "--scope", "raw", "f24"])?);
+
+    assert_events(
+        ctrl.fetch_until_key(KeyCode::KEY_F24)?,
+        indoc! {"
+            f23:1
+            f23:0
+            f24:1
+            f24:0
+        "},
+    );
+
     ctrl.kill()
 }
 
