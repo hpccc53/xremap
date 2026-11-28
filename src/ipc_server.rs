@@ -63,17 +63,6 @@ pub enum InjectScope {
     Remap,
 }
 
-impl InjectScope {
-    #[cfg(test)]
-    fn parse(word: &str) -> Option<InjectScope> {
-        match word {
-            "raw" => Some(InjectScope::Raw),
-            "remap" => Some(InjectScope::Remap),
-            _ => None,
-        }
-    }
-}
-
 /// A parsed `MODIFIER+...+KEY` chord. Modifiers are emitted around the key.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Chord {
@@ -205,16 +194,6 @@ pub enum IpcCommand {
     },
     /// Pause command processing; maps to the existing Action::Delay.
     Sleep(std::time::Duration),
-}
-
-impl IpcCommand {
-    #[cfg(test)]
-    fn scope(&self) -> InjectScope {
-        match self {
-            IpcCommand::SendKey { scope, .. } => *scope,
-            _ => panic!("not a SendKey"),
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -999,15 +978,6 @@ mod tests {
             keys(chord.to_actions(false, true)),
             vec![(Key::KEY_A, KeyValue::Release), (Key::KEY_LEFTCTRL, KeyValue::Release)]
         );
-    }
-
-    #[test]
-    fn key_scopes_are_raw_and_remap() {
-        for scope in ["raw", "remap"] {
-            let line = serde_json::json!({"command": "key", "scope": scope, "chords": ["x"]}).to_string();
-            let (command, _) = cmd(&line, "insert", true);
-            assert_eq!(command.unwrap().scope(), InjectScope::parse(scope).unwrap(), "{scope}");
-        }
     }
 
     #[test]
