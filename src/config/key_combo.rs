@@ -132,4 +132,14 @@ impl Modifier {
             Modifier::Key(key) => modifiers.contains(key),
         }
     }
+
+    pub fn to_key(&self) -> Key {
+        match self {
+            Modifier::Shift => Key::KEY_LEFTSHIFT,
+            Modifier::Control => Key::KEY_LEFTCTRL,
+            Modifier::Alt => Key::KEY_LEFTALT,
+            Modifier::Windows => Key::KEY_LEFTMETA,
+            Modifier::Key(key) => *key,
+        }
+    }
 }

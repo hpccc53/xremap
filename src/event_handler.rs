@@ -802,13 +802,7 @@ impl EventHandler {
                 if modifier.is_in(current) {
                     None
                 } else {
-                    match modifier {
-                        Modifier::Shift => Some(Key::KEY_LEFTSHIFT),
-                        Modifier::Control => Some(Key::KEY_LEFTCTRL),
-                        Modifier::Alt => Some(Key::KEY_LEFTALT),
-                        Modifier::Windows => Some(Key::KEY_LEFTMETA),
-                        Modifier::Key(key) => Some(*key),
-                    }
+                    Some(modifier.to_key())
                 }
             })
             .collect();

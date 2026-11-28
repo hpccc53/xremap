@@ -13,7 +13,7 @@ use std::time::{Duration, Instant};
 use crate::action::Action;
 use crate::config::key::parse_key;
 use crate::config::key_aliases::pre_load_key_aliases;
-use crate::config::key_combo::{parse_modifier_alias, Modifier};
+use crate::config::key_combo::parse_modifier_alias;
 use crate::config::ConfigFiletype;
 use crate::device::InputDeviceInfo;
 use crate::event::{Event, KeyEvent, KeyValue};
@@ -70,24 +70,12 @@ pub struct Chord {
     pub key: Key,
 }
 
-/// Concrete key for a config modifier: the left-hand key for the matching
-/// aliases, the exact key for `Modifier::Key`.
-fn modifier_key(modifier: &Modifier) -> Key {
-    match modifier {
-        Modifier::Shift => Key::KEY_LEFTSHIFT,
-        Modifier::Control => Key::KEY_LEFTCTRL,
-        Modifier::Alt => Key::KEY_LEFTALT,
-        Modifier::Windows => Key::KEY_LEFTMETA,
-        Modifier::Key(key) => *key,
-    }
-}
-
 /// Parse one chord part as a modifier, reusing the config parser: the same
 /// aliases (S/C/A/M/SUPER/WIN/..., case-insensitive) and exact keys
 /// (KEY_RIGHTALT, CODE_...) as `modmap`/`keymap` source modifiers.
 fn parse_chord_modifier(part: &str) -> Option<Key> {
     parse_modifier_alias(part)
-        .map(|modifier| modifier_key(&modifier))
+        .map(|modifier| modifier.to_key())
         .or_else(|| parse_key(part).ok())
 }
 
@@ -110,7 +98,7 @@ impl Chord {
             // The config rejects ambiguous modifier names as keys; for a
             // lone modifier chord the left-hand key is the intended one.
             Err(err) if modifier_parts.is_empty() => parse_modifier_alias(key_part)
-                .map(|modifier| modifier_key(&modifier))
+                .map(|modifier| modifier.to_key())
                 .ok_or_else(|| format!("invalid key: {err}"))?,
             Err(err) => return Err(format!("invalid key: {err}")),
         };
