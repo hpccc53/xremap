@@ -7,8 +7,8 @@ use std::path::PathBuf;
 /// Client-side IPC subcommands (`xremap <command>`). Each serializes to one
 /// JSON request line of the socket protocol; the server replies once per
 /// command. Variant and field names are the wire format.
-#[derive(Subcommand, Debug, PartialEq, serde::Serialize)]
-#[serde(tag = "command", rename_all = "kebab-case")]
+#[derive(Subcommand, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "command", rename_all = "kebab-case", deny_unknown_fields)]
 pub enum ClientCommand {
     /// Liveness check.
     Ping,
@@ -23,10 +23,10 @@ pub enum ClientCommand {
     Key {
         /// Simulated source device name (matches `device:` keymap conditions).
         #[arg(long)]
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         device: Option<String>,
         #[arg(long)]
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         scope: Option<crate::ipc_server::InjectScope>,
         /// Chords like `ctrl+a`, `f13` or `Down*3` (repeat suffix).
         #[arg(required = true, num_args = 1.., trailing_var_arg = true, allow_hyphen_values = true)]
@@ -36,10 +36,10 @@ pub enum ClientCommand {
     Keydown {
         /// Simulated source device name (matches `device:` keymap conditions).
         #[arg(long)]
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         device: Option<String>,
         #[arg(long)]
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         scope: Option<crate::ipc_server::InjectScope>,
         /// Chords like `ctrl+a`, `f13` or `Down*3` (repeat suffix).
         #[arg(required = true, num_args = 1.., trailing_var_arg = true, allow_hyphen_values = true)]
@@ -49,10 +49,10 @@ pub enum ClientCommand {
     Keyup {
         /// Simulated source device name (matches `device:` keymap conditions).
         #[arg(long)]
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         device: Option<String>,
         #[arg(long)]
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         scope: Option<crate::ipc_server::InjectScope>,
         /// Chords like `ctrl+a`, `f13` or `Down*3` (repeat suffix).
         #[arg(required = true, num_args = 1.., trailing_var_arg = true, allow_hyphen_values = true)]

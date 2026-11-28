@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 use crate::action::Action;
+use crate::client_mode::ClientCommand;
 use crate::config::key::parse_key;
 use crate::config::key_aliases::pre_load_key_aliases;
 use crate::config::key_combo::parse_modifier_alias;
@@ -220,45 +221,6 @@ fn valid_mode_name(mode: &str) -> bool {
         && mode.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
 }
 
-/// One request line, deserialized with serde.
-#[derive(Debug, Clone, PartialEq, serde::Deserialize)]
-#[serde(tag = "command", rename_all = "kebab-case", deny_unknown_fields)]
-pub enum IpcRequest {
-    Ping,
-    GetMode,
-    SetMode {
-        mode: String,
-    },
-    /// Inject full key chords. `scope` defaults to `raw`.
-    Key {
-        #[serde(default)]
-        scope: Option<InjectScope>,
-        #[serde(default)]
-        device: Option<String>,
-        chords: Vec<String>,
-    },
-    /// Only the press half.
-    Keydown {
-        #[serde(default)]
-        scope: Option<InjectScope>,
-        #[serde(default)]
-        device: Option<String>,
-        chords: Vec<String>,
-    },
-    /// Only the release half.
-    Keyup {
-        #[serde(default)]
-        scope: Option<InjectScope>,
-        #[serde(default)]
-        device: Option<String>,
-        chords: Vec<String>,
-    },
-    /// Pause command processing.
-    Sleep {
-        milliseconds: u64,
-    },
-}
-
 /// The part of a serde_json error after the line/column suffix; requests are
 /// always single lines, so those positions carry no information.
 fn describe_parse_error(err: serde_json::Error) -> String {
@@ -276,20 +238,20 @@ fn injection_disabled() -> (Option<IpcCommand>, Reply) {
 /// Pure command handling, testable without a socket.
 /// Returns the command to apply in the main loop (if any) and the reply.
 pub fn handle_command(line: &str, current_mode: &str, inject_enabled: bool) -> (Option<IpcCommand>, Reply) {
-    let request: IpcRequest = match serde_json::from_str(line) {
+    let request: ClientCommand = match serde_json::from_str(line) {
         Ok(request) => request,
         Err(err) => return (None, Reply::Err(describe_parse_error(err))),
     };
     match request {
-        IpcRequest::Ping => (None, Reply::Pong),
-        IpcRequest::GetMode => (None, Reply::Mode(current_mode.to_string())),
-        IpcRequest::SetMode { mode } => {
+        ClientCommand::Ping => (None, Reply::Pong),
+        ClientCommand::GetMode => (None, Reply::Mode(current_mode.to_string())),
+        ClientCommand::SetMode { mode } => {
             if !valid_mode_name(&mode) {
                 return (None, Reply::Err("invalid mode name".to_string()));
             }
             (Some(IpcCommand::SetMode(mode)), Reply::Ok)
         }
-        IpcRequest::Key { scope, device, chords } => {
+        ClientCommand::Key { scope, device, chords } => {
             if !inject_enabled {
                 return injection_disabled();
             }
@@ -298,7 +260,7 @@ pub fn handle_command(line: &str, current_mode: &str, inject_enabled: bool) -> (
                 Err(reason) => (None, Reply::Err(reason)),
             }
         }
-        IpcRequest::Keydown { scope, device, chords } => {
+        ClientCommand::Keydown { scope, device, chords } => {
             if !inject_enabled {
                 return injection_disabled();
             }
@@ -307,7 +269,7 @@ pub fn handle_command(line: &str, current_mode: &str, inject_enabled: bool) -> (
                 Err(reason) => (None, Reply::Err(reason)),
             }
         }
-        IpcRequest::Keyup { scope, device, chords } => {
+        ClientCommand::Keyup { scope, device, chords } => {
             if !inject_enabled {
                 return injection_disabled();
             }
@@ -316,7 +278,7 @@ pub fn handle_command(line: &str, current_mode: &str, inject_enabled: bool) -> (
                 Err(reason) => (None, Reply::Err(reason)),
             }
         }
-        IpcRequest::Sleep { milliseconds } => {
+        ClientCommand::Sleep { milliseconds } => {
             if !inject_enabled {
                 return injection_disabled();
             }
