@@ -22,43 +22,43 @@ pub enum ClientCommand {
     /// Inject key chords, each a press and a release. Requires `ipc.inject`.
     Key {
         /// Simulated source device name (matches `device:` keymap conditions).
-        #[arg(long, value_name = "NAME")]
+        #[arg(long)]
         #[serde(skip_serializing_if = "Option::is_none")]
         device: Option<String>,
         /// Pipeline layer the chords enter at: raw (default), keymap, modmap, expmap.
-        #[arg(long, value_name = "SCOPE")]
+        #[arg(long)]
         #[serde(skip_serializing_if = "Option::is_none")]
         scope: Option<crate::ipc_server::InjectScope>,
         /// Chords like `ctrl+a`, `f13` or `Down*3` (repeat suffix).
-        #[arg(value_name = "CHORD", required = true, num_args = 1.., trailing_var_arg = true, allow_hyphen_values = true)]
+        #[arg(required = true, num_args = 1.., trailing_var_arg = true, allow_hyphen_values = true)]
         chords: Vec<String>,
     },
     /// Press and hold the given chords. Requires `ipc.inject`.
     Keydown {
         /// Simulated source device name (matches `device:` keymap conditions).
-        #[arg(long, value_name = "NAME")]
+        #[arg(long)]
         #[serde(skip_serializing_if = "Option::is_none")]
         device: Option<String>,
         /// Pipeline layer the chords enter at: raw (default), keymap, modmap, expmap.
-        #[arg(long, value_name = "SCOPE")]
+        #[arg(long)]
         #[serde(skip_serializing_if = "Option::is_none")]
         scope: Option<crate::ipc_server::InjectScope>,
         /// Chords like `ctrl+a`, `f13` or `Down*3` (repeat suffix).
-        #[arg(value_name = "CHORD", required = true, num_args = 1.., trailing_var_arg = true, allow_hyphen_values = true)]
+        #[arg(required = true, num_args = 1.., trailing_var_arg = true, allow_hyphen_values = true)]
         chords: Vec<String>,
     },
     /// Release the given chords. Requires `ipc.inject`.
     Keyup {
         /// Simulated source device name (matches `device:` keymap conditions).
-        #[arg(long, value_name = "NAME")]
+        #[arg(long)]
         #[serde(skip_serializing_if = "Option::is_none")]
         device: Option<String>,
         /// Pipeline layer the chords enter at: raw (default), keymap, modmap, expmap.
-        #[arg(long, value_name = "SCOPE")]
+        #[arg(long)]
         #[serde(skip_serializing_if = "Option::is_none")]
         scope: Option<crate::ipc_server::InjectScope>,
         /// Chords like `ctrl+a`, `f13` or `Down*3` (repeat suffix).
-        #[arg(value_name = "CHORD", required = true, num_args = 1.., trailing_var_arg = true, allow_hyphen_values = true)]
+        #[arg(required = true, num_args = 1.., trailing_var_arg = true, allow_hyphen_values = true)]
         chords: Vec<String>,
     },
     /// Pause command processing (1-5000 ms). Blocks xremap's event loop. Requires `ipc.inject`.
