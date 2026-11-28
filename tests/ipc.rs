@@ -6,6 +6,7 @@ use evdev::KeyCode;
 use indoc::indoc;
 use std::io::{BufRead, BufReader, Write};
 use std::os::unix::net::UnixStream;
+use std::time::Instant;
 
 mod common;
 
@@ -109,21 +110,14 @@ pub fn e2e_ipc_max_connections() -> anyhow::Result<()> {
 
 #[test]
 pub fn e2e_ipc_key_injection_is_disabled_by_default() -> anyhow::Result<()> {
-    let ctrl = XremapController::builder()
-        .config_with_ipc(&indoc! {"
-            keymap:
-                - remap:
-                    f12: { action: exit }
-            ",
-        })?
-        .build()?;
+    let ctrl = XremapController::builder().config_with_ipc("")?.build()?;
 
     // Injection requires `ipc.inject: true`; the daemon must stay up.
     assert_eq!("err injection disabled\n", ctrl.ipc_client_failure(vec!["key", "f24"])?);
     assert_eq!("err injection disabled\n", ctrl.ipc_client_failure(vec!["keydown", "shift"])?);
     assert_eq!("err injection disabled\n", ctrl.ipc_client_failure(vec!["sleep", "1"])?);
     assert_eq!("pong\n", ctrl.ipc_client(vec!["ping"])?);
-    Ok(())
+    ctrl.kill()
 }
 
 #[test]
@@ -158,7 +152,9 @@ pub fn e2e_ipc_sleep_pauses_but_keeps_the_daemon_responsive() -> anyhow::Result<
         })?
         .build()?;
 
-    assert_eq!("ok\n", ctrl.ipc_client(vec!["sleep", "1"])?);
+    let start = Instant::now();
+    assert_eq!("ok\n", ctrl.ipc_client(vec!["sleep", "100"])?);
+    assert!(Instant::now().duration_since(start).as_millis() > 100);
     assert_eq!("pong\n", ctrl.ipc_client(vec!["ping"])?);
-    Ok(())
+    ctrl.kill()
 }
