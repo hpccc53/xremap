@@ -53,7 +53,7 @@ reply `ok\n` on success and `err REASON\n` on failure.
   ```
 
   A chord is `MODIFIER+...+KEY` using the config key names (`ctrl`, `shift`,
-  `alt`, `super`, `altgr`, then e.g. `f13`, `KEY_F13`, `CODE_183`), with an
+  `alt`, `super`, then e.g. `f13`, `KEY_F13`, `CODE_183`), with an
   optional `*N` repeat suffix (1–16 per command). A lone modifier chord
   (`shift`) means the left-hand key. `keydown` emits only the press half and
   `keyup` only the release half, so a held modifier can span several commands:
